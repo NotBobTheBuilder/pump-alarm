@@ -24,7 +24,7 @@ EthernetClient ethClient;
 PubSubClient mqttClient(ethClient);
 
 // 0 = low, 1 = transitioning (prevents spurious highs), 2 = high
-int state = 0;
+int state = 1;
   
 void setup() {
   Serial.begin(9600);
@@ -34,9 +34,9 @@ void setup() {
 
 //  I don't have a PoE featherwing yet, so skip this and use the hardcoded mac
 //  (Would read the MAC programmed in the 24AA02E48 chip)
-//  for (byte i = 0;  i < 6; i++) {
-//    mac[i] = readRegister(0xFA + i);
-//  }
+  for (byte i = 0;  i < 6; i++) {
+    mac[i] = readRegister(0xFA + i);
+  }
 
   Serial.println("booted!");
 
@@ -66,21 +66,21 @@ void setup() {
 void loop() {
   int readResult = digitalRead(2);
   int transition = readResult ? 1 : -1;
+  mqttClient.loop();
   if (state == 1) {
     mqttClient.publish("pump-alarm/high-water-detected", readResult ? "1" : "0");
   }
   state = max(min(state + transition, 2), 0);
-  Serial.println(readResult ? "HIGH" : "LOW");
-  delay(2000);
+  delay(500);
 }
 
 void handleMessage(char* topic, byte* payload, unsigned int length) {
   Serial.print("message from topic ");
   Serial.println(topic);
-  if (strcmp("pump-alarm/high-water-detected", topic) && length == 0) {
+  if (strcmp("pump-alarm/high-water-detected", topic) == 0 && length == 0) {
     mqttClient.publish("pump-alarm/high-water-detected",
       state == 2 ? "1" : "0", 1);
-  } else if (strcmp("pump-alarm/active", topic) && length == 0) {
+  } else if (strcmp("pump-alarm/active", topic) == 0 && length == 0) {
     mqttClient.publish("pump-alarm/active", "1", 1);
   }
 }
