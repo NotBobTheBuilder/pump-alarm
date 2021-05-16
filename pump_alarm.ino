@@ -32,8 +32,7 @@ void setup() {
   // Start I2C bus
   Wire.begin();
 
-//  I don't have a PoE featherwing yet, so skip this and use the hardcoded mac
-//  (Would read the MAC programmed in the 24AA02E48 chip)
+  // Read the MAC programmed in the onboard 24AA02E48 chip
   for (byte i = 0;  i < 6; i++) {
     mac[i] = readRegister(0xFA + i);
   }
